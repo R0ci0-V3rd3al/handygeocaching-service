@@ -166,7 +166,7 @@ if (($submitValue = getFieldValue($content, $submitName)) === false) {
 
 //pridame byte order mark, bez toho to nefuguje
 //$fieldnotes = chr(0xEF).chr(0xBB).chr(0xBF).$fieldnotes;
-$fieldnotes = chr(0xFF) . chr(0xFE) . iconv('UTF-8', 'UTF-16LE', $fieldnotes);
+//$fieldnotes = chr(0xFF) . chr(0xFE) . iconv('UTF-8', 'UTF-16LE', $fieldnotes);
 
 $vals = array(
     '__VIEWSTATE' => $viewstate,

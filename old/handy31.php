@@ -38,29 +38,30 @@ if (!UserSessionHandler::prepareSession() && $part != 'login') {
     }
 
     //logovani
-    $req = new SimpleHttpRequest('https://www.geocaching.com/login/default.aspx');
+    $req = new SimpleHttpRequest('https://www.geocaching.com/account/login');
     $req->setMethod(SimpleHttpRequest::METHOD_GET);
-    addHeaders($req);
+    addHeaders($req, true);
 
     $req->sendRequest();
     $response = $req->getResponseBody();
 
     if (!$req->getResponseBody())
         die('err:TIMEOUT');
+
+    UserSessionHandler::handleHTTPCookies($req);
     unset($req);
 
-    $pozice = strpos($response, '__VIEWSTATE');
-    $viewstate = coJeMezi($response, $pozice, 'value="', '/>');
-    $viewstate = trim(str_replace('"', '', $viewstate));
+    $pozice = strpos($response, '__RequestVerificationToken');
+    $token = coJeMezi($response, $pozice, 'value=', '/>');
+    $token = trim(str_replace('"', '', $token));
 
-    $req = new SimpleHttpRequest('https://www.geocaching.com/login/default.aspx');
+    $req = new SimpleHttpRequest('https://www.geocaching.com/account/login');
     $req->setMethod(SimpleHttpRequest::METHOD_POST);
     addHeaders($req);
 
-    $req->addPostData('__VIEWSTATE', $viewstate);
-    $req->addPostData('ctl00$ContentBody$tbUsername', $name);
-    $req->addPostData('ctl00$ContentBody$tbPassword', $password);
-    $req->addPostData('ctl00$ContentBody$btnSignIn', 'Login');
+    $req->addPostData('__RequestVerificationToken', $token);
+    $req->addPostData('Username', $name);
+    $req->addPostData('Password', $password);
 
     $req->sendRequest();
     UserSessionHandler::handleHTTPCookies($req);
@@ -68,9 +69,9 @@ if (!UserSessionHandler::prepareSession() && $part != 'login') {
     if (!$req->getResponseBody())
         die('err:TIMEOUT');
 
-    if (strpos($req->getResponseBody(), 'does not match') > 0) {
+    if (strpos($req->getResponseBody(), 'or password is incorrect') > 0) {
         Vypis("ERR_BAD_PASSWORD");
-    } elseif (strpos($req->getResponseBody(), 'ctl00$ContentBody$tbUsername')) {
+    } elseif (strpos($req->getResponseBody(), 'Forgot your username or password?')) {
         Vypis("ERR_AUTH_FAILED");
     } else {
         //verze
@@ -101,8 +102,9 @@ if (!UserSessionHandler::prepareSession() && $part != 'login') {
         $suffix = "";
     }
 
-    $req = new SimpleHttpRequest('http://www.geocaching.com/seek/nearest.aspx?lat=' . $latitude .
-        '&lon=' . $longitude . $suffix);
+    $url = 'https://www.geocaching.com/seek/nearest.aspx?lat=' . $latitude . '&lon=' . $longitude . $suffix;
+
+    $req = new SimpleHttpRequest($url);
     $req->setMethod(SimpleHttpRequest::METHOD_GET);
     addHeaders($req);
 
@@ -135,14 +137,14 @@ if (!UserSessionHandler::prepareSession() && $part != 'login') {
             continue;
         }
 
-        $smer = coJeMezi($response, $pozice, '<img src="/images/icons/compass/', '.gif"');
+        $smer = coJeMezi($response, $pozice, '/images/icons/compass/', '.gif"');
         $smer = directionToCzech($smer);
 
         $vzdalenost = coJeMezi($response, $pozice, '<br />', '</span>');
 
-        $obrazek = coJeMezi($response, $pozice, '<img src="/images/wpttypes/', '.gif" alt=');
+        $obrazek = coJeMezi($response, $pozice, '/images/wpttypes/', '.gif" alt=');
         //if ($obrazek == 'check')
-        //	$obrazek = coJeMezi($response, $pozice, '<img src="http://www.geocaching.com/images/wpttypes/sm/', '.gif" alt=');
+        //	$obrazek = coJeMezi($response, $pozice, '<img src="https://www.geocaching.com/images/wpttypes/sm/', '.gif" alt=');
 
         //filtrovani
         if ($filter[0] == "0" && $obrazek == "2")
@@ -188,7 +190,9 @@ if (!UserSessionHandler::prepareSession() && $part != 'login') {
     if (empty ($numberCaches))
         $numberCaches = 10; //kompatibilita
 
-    $req = new SimpleHttpRequest('http://www.geocaching.com/seek/nearest.aspx?key=' . urlencode($keyword) . '&submit4=Go');
+    $url = 'https://www.geocaching.com/seek/nearest.aspx?key=' . urlencode($keyword) . '&submit4=Go';
+
+    $req = new SimpleHttpRequest($url);
     $req->setMethod(SimpleHttpRequest::METHOD_GET);
     addHeaders($req);
 
@@ -219,7 +223,7 @@ if (!UserSessionHandler::prepareSession() && $part != 'login') {
                 $pozice++;
                 continue;
             }
-            $obrazek = coJeMezi($response, $pozice, '<img src="/images/wpttypes/', '.gif" alt=');
+            $obrazek = coJeMezi($response, $pozice, '/images/wpttypes/', '.gif" alt=');
             $nazev = coJeMezi($response, $pozice, '<a', '</span>');
 
             //uprava nazvu
@@ -253,7 +257,7 @@ if (!UserSessionHandler::prepareSession() && $part != 'login') {
     $waypoint = trim($_GET["waypoint"]);
     $cookie = $_GET["cookie"];
 
-    $req = new SimpleHttpRequest('http://www.geocaching.com/seek/cache_details.aspx?wp=' . $waypoint .
+    $req = new SimpleHttpRequest('https://www.geocaching.com/seek/cache_details.aspx?wp=' . $waypoint .
         '+&Submit6=Go');
     $req->setMethod(SimpleHttpRequest::METHOD_GET);
     addHeaders($req);
@@ -273,7 +277,7 @@ if (!UserSessionHandler::prepareSession() && $part != 'login') {
     } //TODO cestina
     elseif (strpos($response, 'Premium Members only')) {
         Vypis("ERR_PM_ONLY");
-    } elseif (strpos($response, '<div id="ctl00_divNotSignedIn"')) {
+    } elseif (strpos($response, '/account/login?returnUrl=')) {
         Vypis('ERR_YOU_ARE_NOT_LOGGED');
     } else {
         $pozice = strpos($response, '<section id="Content">');
@@ -288,7 +292,7 @@ if (!UserSessionHandler::prepareSession() && $part != 'login') {
         $terrain = coJeMezi($response, $pozice, 'alt="', ' out');
         $size = coJeMezi($response, $pozice, '<small>(', ')</small>');
 
-        if (strpos($response, '<div id="ctl00_divNotSignedIn"', $pozice)) {
+        if (strpos($response, '/account/login?returnUrl=', $pozice)) {
             Vypis('ERR_YOU_ARE_NOT_LOGGED');
         } else {
 
@@ -387,7 +391,7 @@ if (!UserSessionHandler::prepareSession() && $part != 'login') {
     $waypoint = $_GET["waypoint"];
     $cookie = $_GET["cookie"];
 
-    $req = new SimpleHttpRequest('http://www.geocaching.com/seek/cache_details.aspx?wp=' . $waypoint .
+    $req = new SimpleHttpRequest('https://www.geocaching.com/seek/cache_details.aspx?wp=' . $waypoint .
         '+&Submit6=Go');
     $req->setMethod(SimpleHttpRequest::METHOD_GET);
     addHeaders($req);
@@ -403,7 +407,7 @@ if (!UserSessionHandler::prepareSession() && $part != 'login') {
     //data mining
     if (strpos($response, 'Cache is Unpublished"')) {
         Vypis("ERR_BAD_WAYPOINT");
-    } elseif (strpos($response, '<div id="ctl00_divNotSignedIn"')) {
+    } elseif (strpos($response, '/account/login?returnUrl=')) {
         Vypis('ERR_YOU_ARE_NOT_LOGGED');
     } else {
         $pozice = 0;
@@ -426,7 +430,7 @@ if (!UserSessionHandler::prepareSession() && $part != 'login') {
     $waypoint = $_GET["waypoint"];
     $cookie = $_GET["cookie"];
 
-    $req = new SimpleHttpRequest('http://www.geocaching.com/seek/cache_details.aspx?wp=' . $waypoint .
+    $req = new SimpleHttpRequest('https://www.geocaching.com/seek/cache_details.aspx?wp=' . $waypoint .
         '+&Submit6=Go');
     $req->setMethod(SimpleHttpRequest::METHOD_GET);
     addHeaders($req);
@@ -477,7 +481,7 @@ if (!UserSessionHandler::prepareSession() && $part != 'login') {
     $waypoint = $_GET["waypoint"];
     $cookie = $_GET["cookie"];
 
-    $req = new SimpleHttpRequest('http://www.geocaching.com/seek/cache_details.aspx?wp=' . $waypoint .
+    $req = new SimpleHttpRequest('https://www.geocaching.com/seek/cache_details.aspx?wp=' . $waypoint .
         '+&Submit6=Go');
     $req->setMethod(SimpleHttpRequest::METHOD_GET);
     addHeaders($req);
@@ -491,7 +495,7 @@ if (!UserSessionHandler::prepareSession() && $part != 'login') {
     unset($req);
 
     //data mining
-    if (strpos($response, '<div id="ctl00_divNotSignedIn"', $pozice)) {
+    if (strpos($response, '/account/login?returnUrl=', $pozice)) {
         Vypis('ERR_YOU_ARE_NOT_LOGGED');
     } elseif (strpos($response, 'Cache is Unpublished')) {
         Vypis("ERR_BAD_WAYPOINT");
@@ -538,7 +542,7 @@ if (!UserSessionHandler::prepareSession() && $part != 'login') {
     $waypoint = $_GET["waypoint"];
     $cookie = $_GET["cookie"];
 
-    $req = new SimpleHttpRequest('http://www.geocaching.com/seek/cache_details.aspx?wp=' . $waypoint .
+    $req = new SimpleHttpRequest('https://www.geocaching.com/seek/cache_details.aspx?wp=' . $waypoint .
         '+&Submit6=Go');
     $req->setMethod(SimpleHttpRequest::METHOD_GET);
     addHeaders($req);
@@ -577,7 +581,7 @@ if (!UserSessionHandler::prepareSession() && $part != 'login') {
     $guideline = $_GET["guideline"];
     $cookie = $_GET["cookie"];
 
-    $req = new SimpleHttpRequest('http://www.geocaching.com/seek/cache_details.aspx?guid=' .
+    $req = new SimpleHttpRequest('https://www.geocaching.com/seek/cache_details.aspx?guid=' .
         $guideline . '&log=y&decrypt=');
     $req->setMethod(SimpleHttpRequest::METHOD_GET);
     addHeaders($req);
@@ -656,7 +660,7 @@ if (!UserSessionHandler::prepareSession() && $part != 'login') {
     $trnumber = $_GET["trnumber"];
     $cookie = $_GET["cookie"];
 
-    $req = new SimpleHttpRequest('http://www.geocaching.com/track/details.aspx?tracker=' . $trnumber);
+    $req = new SimpleHttpRequest('https://www.geocaching.com/track/details.aspx?tracker=' . $trnumber);
     $req->setMethod(SimpleHttpRequest::METHOD_GET);
     addHeaders($req);
 
@@ -708,7 +712,7 @@ if (!UserSessionHandler::prepareSession() && $part != 'login') {
     $waypoint = $_GET["waypoint"];
     $cookie = $_GET["cookie"];
 
-    $req = new SimpleHttpRequest('http://www.geocaching.com/seek/cache_details.aspx?wp=' . $waypoint .
+    $req = new SimpleHttpRequest('https://www.geocaching.com/seek/cache_details.aspx?wp=' . $waypoint .
         '+&Submit6=Go');
     $req->setMethod(SimpleHttpRequest::METHOD_GET);
     addHeaders($req);
@@ -916,8 +920,10 @@ function replaceBrackets($str) {
 /**
  * @param $req SimpleHttpRequest
  */
-function addHeaders(&$req) {
-    UserSessionHandler::prepareHTTPCookies($req);
+function addHeaders(&$req, $skipCookies = false) {
+    if (!$skipCookies)
+        UserSessionHandler::prepareHTTPCookies($req);
+
     $req->addHeader('User-Agent', 'Mozilla/5.0 (Windows NT 5.1; rv:2.0.1) Gecko/20100101 Firefox/4.0.1');
     $req->addHeader('Accept', 'text/xml,application/xml,application/xhtml+xml,text/html;q=0.9,text/plain;q=0.8,image/png,*/*;q=0.5');
     $req->addHeader('Accept-Charset', 'ISO-8859-1,utf-8;q=0.7,*;q=0.7');

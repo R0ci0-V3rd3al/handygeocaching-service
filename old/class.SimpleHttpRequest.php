@@ -140,11 +140,11 @@ class SimpleHttpRequest {
             }
 
             $last_url = parse_url(curl_getinfo($ch, CURLINFO_EFFECTIVE_URL));
-            if (!$url['scheme'])
+            if (!isset($url['scheme']))
                 $url['scheme'] = $last_url['scheme'];
-            if (!$url['host'])
+            if (!isset($url['host']))
                 $url['host'] = $last_url['host'];
-            if (!$url['path'])
+            if (!isset($url['path']))
                 $url['path'] = $last_url['path'];
 
             $new_url = $url['scheme'] . '://' . $url['host'] . $url['path'] . (isset($url['query']) ? '?' . $url['query'] : '');
