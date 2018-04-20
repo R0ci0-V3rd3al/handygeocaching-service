@@ -142,7 +142,7 @@ if (!UserSessionHandler::prepareSession() && $part != 'login') {
 
         $vzdalenost = coJeMezi($response, $pozice, '<br />', '</span>');
 
-        $obrazek = coJeMezi($response, $pozice, '/images/wpttypes/', '.gif" alt=');
+        $obrazek = coJeMezi($response, $pozice, 'WptTypes/', '.gif"');
         //if ($obrazek == 'check')
         //	$obrazek = coJeMezi($response, $pozice, '<img src="https://www.geocaching.com/images/wpttypes/sm/', '.gif" alt=');
 
@@ -223,7 +223,7 @@ if (!UserSessionHandler::prepareSession() && $part != 'login') {
                 $pozice++;
                 continue;
             }
-            $obrazek = coJeMezi($response, $pozice, '/images/wpttypes/', '.gif" alt=');
+            $obrazek = coJeMezi($response, $pozice, 'WptTypes/', '.gif" alt=');
             $nazev = coJeMezi($response, $pozice, '<a', '</span>');
 
             //uprava nazvu
