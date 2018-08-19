@@ -205,8 +205,7 @@ if (!UserSessionHandler::prepareSession() && $part != 'login') {
     unset($req);
 
     //data mining
-    //TODO tak tohle jiz ve strance neni. Takze to zobrazi prazdny seznam misto chyby.
-    if (strpos($response, 'Sorry, no results') || strpos($response, 'Sorry, no results')) {
+    if (strpos($response, 'ctl00_ContentBody_ResultsPanel') === false) {
         Vypis("WRONG_KEYWORD");
     } else {
         $pozice = 0;
