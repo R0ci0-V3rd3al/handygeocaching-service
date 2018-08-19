@@ -283,8 +283,11 @@ if (!UserSessionHandler::prepareSession() && $part != 'login') {
         $pozice = strpos($response, '<section id="Content">');
 
         //$pozice = strpos($response, 'Start Cache Title Area');
-        $typeNumber = coJeMezi($response, $pozice, 'WptTypes/', '.gif');
-        $type = coJeMezi($response, $pozice, 'alt="', '" title');
+        $type = coJeMezi($response, $pozice, 'title="', '" ');
+        $typeNumber = coJeMezi($response, $pozice, 'cache-types.svg#icon-', '"');
+
+        $typeNumber = explode('-', $typeNumber);
+        $typeNumber = $typeNumber[0];
 
         $name = replaceBrackets(html_entity_decode_utf8(coJeMezi($response, $pozice, '<span id="ctl00_ContentBody_CacheName">', '</span>')));
         $author = replaceBrackets(coJeMezi($response, $pozice, "ds=2\">", '</a>'));
@@ -297,14 +300,10 @@ if (!UserSessionHandler::prepareSession() && $part != 'login') {
         } else {
 
             //archivovana a disablovana
-            if (strpos($response, '<ul class="OldWarning">', $pozice)) {
-                if (strpos($response, 'archived', $pozice)) {
-                    $error = "Archivovaná!";
-                } elseif (strpos($response, 'unavailable', $pozice)) {
-                    $error = "Disablovaná!";
-                } else {
-                    $error = "";
-                }
+            if (strpos($response, 'ctl00_ContentBody_archivedMessage')) {
+                $error = "Archivovaná!";
+            } elseif (strpos($response, 'ctl00_ContentBody_disabledMessage')) {
+                $error = "Disablovaná!";
             } else {
                 $error = "";
             }
@@ -480,6 +479,7 @@ if (!UserSessionHandler::prepareSession() && $part != 'login') {
 } elseif ($part == "waypoints") {
     $waypoint = $_GET["waypoint"];
     $cookie = $_GET["cookie"];
+    $pozice = 0;
 
     $req = new SimpleHttpRequest('https://www.geocaching.com/seek/cache_details.aspx?wp=' . $waypoint .
         '+&Submit6=Go');
@@ -792,7 +792,7 @@ function directionToCzech($direction) {
     $quadrantsCZ = Array('S', 'SV', 'V', 'JV', 'J', 'JZ', 'Z', 'SZ');
 
     $quadrant = array_search($direction, $quadrantsEN);
-    if ($quadrant === NULL)
+    if ($quadrant === null)
         return $direction;
 
     return $quadrantsCZ[$quadrant];
