@@ -558,7 +558,7 @@ if (!UserSessionHandler::prepareSession() && $part != 'login') {
     if (strpos($response, 'Cache is Unpublished')) {
         Vypis("ERR_BAD_WAYPOINT");
     } else {
-        $logs_json = coJeMezi($response, $pozice, 'initalLogs = {', ' };');
+        $logs_json = coJeMezi($response, $pozice, 'initialLogs = {', "};\r\n");
         $json = json_decode('{' . $logs_json . '}', true);
         $logs = analyze_logs($json);
 
