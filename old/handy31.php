@@ -69,10 +69,10 @@ if (!UserSessionHandler::prepareSession() && $part != 'login') {
     if (!$req->getResponseBody())
         die('err:TIMEOUT');
 
-    if (strpos($req->getResponseBody(), 'or password is incorrect') > 0) {
+    if (strpos($req->getResponseBody(), 'validation-summary-errors')) {
         Vypis("ERR_BAD_PASSWORD");
-    } elseif (strpos($req->getResponseBody(), 'Forgot your username or password?')) {
-        Vypis("ERR_AUTH_FAILED");
+//    } elseif (strpos($req->getResponseBody(), 'Forgot your username or password?')) {
+//        Vypis("ERR_AUTH_FAILED");
     } else {
         //verze
         if ($version == $actualVersion)
@@ -273,10 +273,10 @@ if (!UserSessionHandler::prepareSession() && $part != 'login') {
     //TODO cestina
     if (strpos($response, 'Cache is Unpublished')) {
         Vypis("ERR_BAD_WAYPOINT");
-    } //TODO cestina
-    elseif (strpos($response, 'Premium Members only')) {
+    }
+    elseif (strpos($response, 'pmo-banner')) {
         Vypis("ERR_PM_ONLY");
-    } elseif (strpos($response, '/account/login?returnUrl=')) {
+    } elseif (strpos($response, 'ctl00_uxLoginStatus_divNotSignedIn')) {
         Vypis('ERR_YOU_ARE_NOT_LOGGED');
     } else {
         $pozice = strpos($response, '<section id="Content">');
@@ -340,10 +340,10 @@ if (!UserSessionHandler::prepareSession() && $part != 'login') {
             $info = null;
 
             //je hint?
-            if (strpos($response, 'id="div_hint"'))
-                $hint = 1;
-            else
+            if (strpos($response, '<span id="ctl00_ContentBody_EncryptionKey" class="right"></span>'))
                 $hint = 0;
+            else
+                $hint = 1;
 
             //pridavne waypointy
             if (strpos($response, 'ctl00_ContentBody_Waypoints'))
@@ -405,7 +405,7 @@ if (!UserSessionHandler::prepareSession() && $part != 'login') {
     //data mining
     if (strpos($response, 'Cache is Unpublished"')) {
         Vypis("ERR_BAD_WAYPOINT");
-    } elseif (strpos($response, '/account/login?returnUrl=')) {
+    } elseif (strpos($response, 'ctl00_uxLoginStatus_divNotSignedIn')) {
         Vypis('ERR_YOU_ARE_NOT_LOGGED');
     } else {
         $pozice = 0;
@@ -444,7 +444,7 @@ if (!UserSessionHandler::prepareSession() && $part != 'login') {
     //data mining
     if (strpos($response, 'Cache is Unpublished')) {
         Vypis("ERR_BAD_WAYPOINT");
-    } elseif (strpos($response, 'No hints available') || strpos($response, 'Hint není k dispozici')) {
+    } elseif (strpos($response, '<span id="ctl00_ContentBody_EncryptionKey" class="right"></span>')) {
         Vypis("NO_HINT");
     } else {
         $pozice = 0;
@@ -494,7 +494,7 @@ if (!UserSessionHandler::prepareSession() && $part != 'login') {
     unset($req);
 
     //data mining
-    if (strpos($response, '/account/login?returnUrl=', $pozice)) {
+    if (strpos($response, 'ctl00_uxLoginStatus_divNotSignedIn', $pozice)) {
         Vypis('ERR_YOU_ARE_NOT_LOGGED');
     } elseif (strpos($response, 'Cache is Unpublished')) {
         Vypis("ERR_BAD_WAYPOINT");
