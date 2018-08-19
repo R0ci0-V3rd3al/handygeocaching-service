@@ -38,7 +38,7 @@ if (!UserSessionHandler::prepareSession() && $part != 'login') {
     }
 
     //logovani
-    $req = new SimpleHttpRequest('https://www.geocaching.com/account/login');
+    $req = new SimpleHttpRequest('https://www.geocaching.com/account/signin');
     $req->setMethod(SimpleHttpRequest::METHOD_GET);
     addHeaders($req, true);
 
@@ -55,7 +55,7 @@ if (!UserSessionHandler::prepareSession() && $part != 'login') {
     $token = coJeMezi($response, $pozice, 'value=', '/>');
     $token = trim(str_replace('"', '', $token));
 
-    $req = new SimpleHttpRequest('https://www.geocaching.com/account/login');
+    $req = new SimpleHttpRequest('https://www.geocaching.com/account/signin');
     $req->setMethod(SimpleHttpRequest::METHOD_POST);
     addHeaders($req);
 
