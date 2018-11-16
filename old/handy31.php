@@ -60,7 +60,7 @@ if (!UserSessionHandler::prepareSession() && $part != 'login') {
     addHeaders($req);
 
     $req->addPostData('__RequestVerificationToken', $token);
-    $req->addPostData('Username', $name);
+    $req->addPostData('UsernameOrEmail', $name);
     $req->addPostData('Password', $password);
 
     $req->sendRequest();
@@ -814,7 +814,9 @@ function coJeMezi(&$response, &$pozice, $prvni, $druhy) {
     //global $pozice;
     //global $response;
     $pozice2 = strpos($response, $prvni, $pozice);
+    if ($pozice2 === false) return "";
     $pozice3 = strpos($response, $druhy, $pozice2);
+    if ($pozice3 === false) return "";
     $pozice = $pozice3;
     return trim(substr($response, $pozice2 + strlen($prvni), ($pozice3 - $pozice2 - strlen($prvni))));
 }
